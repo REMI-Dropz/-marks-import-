@@ -1,0 +1,46 @@
+INFO:     Started server process [15468]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+Starting script...
+Environment variables loaded and client initialized.
+Starting Uvicorn server...
+Validating access token...
+Access token validated successfully.
+Fetching balance...
+INFO:     127.0.0.1:49931 - "GET /balance HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:49931 - "OPTIONS /balance HTTP/1.1" 200 OK
+Validating access token...
+Access token validated successfully.
+Fetching balance...
+INFO:     127.0.0.1:49931 - "GET /balance HTTP/1.1" 404 Not Found
+Initiating OAuth...
+OAuth initiated successfully.
+INFO:     127.0.0.1:49940 - "POST /initiate-oauth HTTP/1.1" 200 OK
+Checking callback for payload_uuid: fb77d306-376c-4a6a-891f-651a7e092211
+Payload status response: 200 - {'meta': {'exists': True, 'uuid': 'fb77d306-376c-4a6a-891f-651a7e092211', 'multisign': False, 'submit': False, 'pathfinding': False, 'pathfinding_fallback': False, 'force_network': None, 'destination': '', 'resolved_destination': '', 'resolved': False, 'signed': False, 'cancelled': False, 'expired': False, 'pushed': False, 'app_opened': False, 'opened_by_deeplink': None, 'return_url_app': 'https://xumm.app/return/app/fb77d306-376c-4a6a-891f-651a7e092211/fd0a642b5b965f295493a08bf5805890348c3a27/?h=8f8597ab80c4e34d', 'return_url_web': 'https://xumm.app/return/web/fb77d306-376c-4a6a-891f-651a7e092211/fd0a642b5b965f295493a08bf5805890348c3a27/?h=8f8597ab80c4e34d', 'is_xapp': False, 'signers': None}, 'application': {'name': 'Ripple Enabled Meme Influx (REMI)', 'description': 'REMI (Ripple Enabled Meme Influx):\nREMI is a cutting-edge airdrop bot designed specifically for developers (DEVs) who want to streamline the distribution of XRPL (XRP Ledger) tokens. With its user-friendly interface, REMI allows for the effortless airdropping of tokens to multiple wallets with just a single click, making it an essential tool for anyone looking to engage their community or reward users.', 'disabled': 0, 'uuidv4': '8a2a5076-fb3f-4c0f-b259-41cd1469ad1f', 'icon_url': 'https://cdn.xaman.app/cdn-cgi/image/width=500,height=500,quality=75,fit=cover/app-logo/d2073ddf-f3e7-4ff7-9530-b97feb1468b0.png', 'issued_user_token': None}, 'payload': {'tx_type': 'SignIn', 'tx_destination': '', 'tx_destination_tag': None, 'request_json': {'TransactionType': 'SignIn', 'SignIn': True}, 'origintype': None, 'signmethod': None, 'created_at': '2025-04-21T01:16:34Z', 'expires_at': '2025-04-22T01:16:34Z', 'expires_in_seconds': 86395}, 'response': {'hex': None, 'txid': None, 'resolved_at': None, 'dispatched_to': None, 'dispatched_nodetype': None, 'dispatched_result': None, 'dispatched_to_node': False, 'environment_nodeuri': None, 'environment_nodetype': None, 'multisign_account': None, 'account': '', 'signer': None, 'user': None}, 'custom_meta': {'identifier': None, 'blob': None, 'instruction': None}}
+INFO:     127.0.0.1:49944 - "GET /callback?payload_uuid=fb77d306-376c-4a6a-891f-651a7e092211 HTTP/1.1" 200 OK
+Checking callback for payload_uuid: fb77d306-376c-4a6a-891f-651a7e092211
+Payload status response: 200 - {'meta': {'exists': True, 'uuid': 'fb77d306-376c-4a6a-891f-651a7e092211', 'multisign': False, 'submit': False, 'pathfinding': False, 'pathfinding_fallback': False, 'force_network': None, 'destination': '', 'resolved_destination': '', 'resolved': False, 'signed': False, 'cancelled': False, 'expired': False, 'pushed': False, 'app_opened': False, 'opened_by_deeplink': None, 'return_url_app': 'https://xumm.app/return/app/fb77d306-376c-4a6a-891f-651a7e092211/fd0a642b5b965f295493a08bf5805890348c3a27/?h=8f8597ab80c4e34d', 'return_url_web': 'https://xumm.app/return/web/fb77d306-376c-4a6a-891f-651a7e092211/fd0a642b5b965f295493a08bf5805890348c3a27/?h=8f8597ab80c4e34d', 'is_xapp': False, 'signers': None}, 'application': {'name': 'Ripple Enabled Meme Influx (REMI)', 'description': 'REMI (Ripple Enabled Meme Influx):\nREMI is a cutting-edge airdrop bot designed specifically for developers (DEVs) who want to streamline the distribution of XRPL (XRP Ledger) tokens. With its user-friendly interface, REMI allows for the effortless airdropping of tokens to multiple wallets with just a single click, making it an essential tool for anyone looking to engage their community or reward users.', 'disabled': 0, 'uuidv4': '8a2a5076-fb3f-4c0f-b259-41cd1469ad1f', 'icon_url': 'https://cdn.xaman.app/cdn-cgi/image/width=500,height=500,quality=75,fit=cover/app-logo/d2073ddf-f3e7-4ff7-9530-b97feb1468b0.png', 'issued_user_token': None}, 'payload': {'tx_type': 'SignIn', 'tx_destination': '', 'tx_destination_tag': None, 'request_json': {'TransactionType': 'SignIn', 'SignIn': True}, 'origintype': None, 'signmethod': None, 'created_at': '2025-04-21T01:16:34Z', 'expires_at': '2025-04-22T01:16:34Z', 'expires_in_seconds': 86390}, 'response': {'hex': None, 'txid': None, 'resolved_at': None, 'dispatched_to': None, 'dispatched_nodetype': None, 'dispatched_result': None, 'dispatched_to_node': False, 'environment_nodeuri': None, 'environment_nodetype': None, 'multisign_account': None, 'account': '', 'signer': None, 'user': None}, 'custom_meta': {'identifier': None, 'blob': None, 'instruction': None}}
+INFO:     127.0.0.1:49944 - "GET /callback?payload_uuid=fb77d306-376c-4a6a-891f-651a7e092211 HTTP/1.1" 200 OK
+Checking callback for payload_uuid: fb77d306-376c-4a6a-891f-651a7e092211
+Payload status response: 200 - {'meta': {'exists': True, 'uuid': 'fb77d306-376c-4a6a-891f-651a7e092211', 'multisign': False, 'submit': False, 'pathfinding': False, 'pathfinding_fallback': False, 'force_network': None, 'destination': '', 'resolved_destination': '', 'resolved': True, 'signed': True, 'cancelled': False, 'expired': False, 'pushed': False, 'app_opened': True, 'opened_by_deeplink': True, 'return_url_app': 'https://xumm.app/return/app/fb77d306-376c-4a6a-891f-651a7e092211/fd0a642b5b965f295493a08bf5805890348c3a27/?h=8f8597ab80c4e34d', 'return_url_web': 'https://xumm.app/return/web/fb77d306-376c-4a6a-891f-651a7e092211/fd0a642b5b965f295493a08bf5805890348c3a27/?h=8f8597ab80c4e34d', 'is_xapp': False, 'signers': None}, 'application': {'name': 'Ripple Enabled Meme Influx (REMI)', 'description': 'REMI (Ripple Enabled Meme Influx):\nREMI is a cutting-edge airdrop bot designed specifically for developers (DEVs) who want to streamline the distribution of XRPL (XRP Ledger) tokens. With its user-friendly interface, REMI allows for the effortless airdropping of tokens to multiple wallets with just a single click, making it an essential tool for anyone looking to engage their community or reward users.', 'disabled': 0, 'uuidv4': '8a2a5076-fb3f-4c0f-b259-41cd1469ad1f', 'icon_url': 'https://cdn.xaman.app/cdn-cgi/image/width=500,height=500,quality=75,fit=cover/app-logo/d2073ddf-f3e7-4ff7-9530-b97feb1468b0.png', 'issued_user_token': '9332b434-3cfb-499d-a537-9606cabb473c'}, 'payload': {'tx_type': 'SignIn', 'tx_destination': '', 'tx_destination_tag': None, 'request_json': {'TransactionType': 'SignIn', 'SignIn': True}, 'origintype': 'QR', 'signmethod': 'BIOMETRIC', 'created_at': '2025-04-21T01:16:34Z', 'expires_at': '2025-04-22T01:16:34Z', 'expires_in_seconds': 86385}, 'response': {'hex': '7321ED94D97A029256FEB88823960413A5E1EDE7F5E2E4E640B00435B11B27D836F3C97440A2C8231B2A1416355CE3163499C541F5181C6EDF2335ED653F3DB9AF0585BD1CD086AD751D644AA907754FA91FF211AE3C9755FD49729ACDB6768B9E52306A0C81140F21D8AAC87114B71009F86E5600EC3956C277FF', 'txid': '01620B093C4F6C32C8FA57C5D0D69E6D4923A6309642C8889D63FDA9381981FB', 'resolved_at': '2025-04-21T01:16:48Z', 'dispatched_to': '', 'dispatched_nodetype': '', 'dispatched_result': '', 'dispatched_to_node': False, 'environment_nodeuri': 'wss://s.altnet.rippletest.net:51233', 'environment_nodetype': 'TESTNET', 'multisign_account': '', 'account': 'rpPrgZgbdfffC24K2LmqYZtB5xeeJVMWTW', 'signer': 'rpPrgZgbdfffC24K2LmqYZtB5xeeJVMWTW', 'user': 'ddfa1788-002c-4bf0-81ea-f197792201c3', 'environment_networkid': 1}, 'custom_meta': {'identifier': None, 'blob': None, 'instruction': None}}
+Callback successful, returning access token.
+INFO:     127.0.0.1:49944 - "GET /callback?payload_uuid=fb77d306-376c-4a6a-891f-651a7e092211 HTTP/1.1" 200 OK
+Validating access token...
+Access token validated successfully.
+Fetching balance...
+INFO:     127.0.0.1:49950 - "GET /balance HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:49950 - "OPTIONS /validate-wallets?token_type=XRP HTTP/1.1" 200 OK
+/Users/master/Desktop/remi-airdrop-bot/main.py:194: RuntimeWarning: coroutine 'JsonRpcBase._request_impl' was never awaited
+  results.append({"address": wallet.address, "status": "Invalid", "error": str(e)})
+RuntimeWarning: Enable tracemalloc to get the object allocation traceback
+Validating access token...
+Access token validated successfully.
+Validating wallets...
+Wallet validation completed.
+INFO:     127.0.0.1:49950 - "POST /validate-wallets?token_type=XRP HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49956 - "OPTIONS /airdrop HTTP/1.1" 200 OK
+Validating access token...
+Access token validated successfully.
+INFO:     127.0.0.1:49956 - "POST /airdrop HTTP/1.1" 422 Unprocessable Content

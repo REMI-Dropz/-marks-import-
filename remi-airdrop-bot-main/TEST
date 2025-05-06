@@ -1,0 +1,3 @@
+# test_xumm.py
+from xumm import Xumm
+print("Xumm imported successfully")

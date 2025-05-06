@@ -1,0 +1,2121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REMI Airdrop Bot</title>
+    <link rel="preload" 
+href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" 
+as="style" onload="this.onload=null;this.rel='stylesheet'" crossorigin>
+    <link rel="preload" 
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" 
+as="style" onload="this.onload=null;this.rel='stylesheet'" crossorigin>
+    <style>
+        :root {
+            --wallet-address-transparency: 0.1;
+            --form-section-transparency: 0.1;
+            --results-transparency: 0.1;
+            --fee-confirmation-transparency: 0.9;
+        }
+
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+        }
+
+        #background-video {
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%;
+            object-fit: cover; 
+            z-index: -2; 
+            pointer-events: none;
+        }
+
+        #preloader {
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%;
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        .preloader-logo {
+            font-family: 'Montserrat', sans-serif; 
+            font-size: 2.5em; 
+            font-weight: 700;
+            letter-spacing: 2px; 
+            text-transform: uppercase;
+            background: linear-gradient(90deg, #ff6f61, #ff00ff);
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); text-shadow: 0 0 10px rgba(255, 111, 
+97, 0.5); }
+            50% { transform: scale(1.1); text-shadow: 0 0 20px rgba(255, 
+111, 97, 0.8); }
+            100% { transform: scale(1); text-shadow: 0 0 10px rgba(255, 
+111, 97, 0.5); }
+        }
+
+        .main-content {
+            display: none; 
+            font-family: 'Montserrat', sans-serif; 
+            flex-direction: column;
+            min-height: 100vh; 
+            background: transparent; 
+            color: #fff; 
+            position: relative;
+            overflow-y: auto;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .main-content::-webkit-scrollbar {
+            display: none;
+        }
+
+        header {
+            padding: 20px 0; 
+            text-align: center; 
+            background: transparent;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); 
+            position: relative; 
+            z-index: 1;
+        }
+
+        header h1 {
+            font-family: 'Montserrat', sans-serif; 
+            font-size: 2.2em; 
+            font-weight: 700;
+            letter-spacing: 2px; 
+            text-transform: uppercase;
+            background: linear-gradient(90deg, #ff6f61, #ff00ff);
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent;
+            animation: pulse 2s infinite; 
+            margin: 0;
+        }
+
+        .wallet-toggle {
+            position: absolute; 
+            top: 24px; 
+            right: 20px; 
+            z-index: 10;
+            font-size: 1.5em; 
+            cursor: pointer; 
+            transition: color 0.3s ease;
+        }
+
+        .wallet-toggle.disconnected { 
+            color: #6c757d; 
+        }
+
+        .wallet-toggle.connected { 
+            color: #28a745; 
+        }
+
+        .disconnect-button {
+            position: absolute; 
+            top: 18px; 
+            right: 50px; 
+            z-index: 10;
+            background: linear-gradient(90deg, #ff6f61, #ff00ff); 
+            color: #fff; 
+            border: none;
+            padding: 6px 12px; 
+            border-radius: 15px; 
+            cursor: pointer;
+            font-family: 'Montserrat', sans-serif; 
+            font-size: 0.8em; 
+            font-weight: 600;
+            transition: all 0.3s ease; 
+            box-shadow: 0 3px 10px rgba(255, 111, 97, 0.4);
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+        }
+
+        .disconnect-button:hover {
+            transform: translateY(-2px); 
+            box-shadow: 0 5px 15px rgba(255, 111, 97, 0.6);
+        }
+        #results p {
+            background: rgba(255, 255, 255, 0.1); 
+            color: #fff; 
+            padding: 10px; 
+            border-radius: 8px;
+            margin: 5px 0; 
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: nowrap;
+        }
+
+        #results p .scanned-check {
+            color: #28a745;
+            font-size: 1.2em;
+            margin-left: 10px;
+        }
+
+        #results p .copy-icon {
+            color: #00d4ff;
+            font-size: 1em;
+            cursor: pointer;
+            margin-right: 10px;
+            transition: color 0.3s ease;
+        }
+
+        #results p .copy-icon:hover {
+            color: #ff6f61;
+        }
+
+        .wallet-address-display {
+            z-index: 1; 
+            margin: 0;
+            font-family: 'Montserrat', sans-serif; 
+            font-size: 1em; 
+            font-weight: 500;
+            color: #00d4ff; 
+            text-shadow: 0 0 5px rgba(0, 212, 255, 0.5);
+            background: transparent;
+            padding: 5px 10px; 
+            border-radius: 5px; 
+            display: none;
+            text-align: center; 
+            white-space: nowrap;
+        }
+
+        .wallet-address-container {
+            background: rgba(255, 255, 255, 
+var(--wallet-address-transparency)); 
+            padding: 15px; 
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); 
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex; 
+            flex-direction: column; 
+            align-items: center;
+            width: auto; 
+            max-width: 90%;
+        }
+
+        .container {
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 30px;
+            max-width: 800px; 
+            width: 90%; 
+            margin: 0 auto; 
+            z-index: 1;
+        }
+
+        h2 {
+            font-size: 1.5em; 
+            margin-bottom: 20px; 
+            font-weight: 600; 
+            color: #00d4ff;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        button {
+            background: linear-gradient(90deg, #ff6f61, #ff00ff); 
+            color: #fff; 
+            border: none;
+            padding: 12px 20px; 
+            border-radius: 25px; 
+            cursor: pointer; 
+            margin: 5px;
+            font-size: 0.9em; 
+            font-weight: 600; 
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(255, 111, 97, 0.4); 
+            position: relative; 
+            overflow: hidden;
+        }
+
+        button::before {
+            content: ''; 
+            position: absolute; 
+            top: 0; 
+            left: -100%; 
+            width: 100%; 
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 
+255, 0.3), transparent);
+            transition: 0.5s;
+        }
+
+        button:hover::before { 
+            left: 100%; 
+        }
+
+        button:hover {
+            transform: translateY(-3px); 
+            box-shadow: 0 8px 20px rgba(255, 111, 97, 0.6);
+        }
+
+        button:disabled {
+            background: #6c757d; 
+            cursor: not-allowed; 
+            transform: none; 
+            box-shadow: none;
+        }
+
+        input, select {
+            padding: 12px; 
+            margin: 10px 0; 
+            border: none; 
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1); 
+            color: #fff; 
+            font-size: 1em;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2); 
+            transition: all 0.3s ease;
+            width: 100%; 
+            max-width: 400px;
+            margin-left: auto; 
+            margin-right: auto; 
+            display: block;
+            box-sizing: border-box;
+        }
+
+        input:focus, select:focus {
+            outline: none; 
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        input::placeholder { 
+            color: #aaa; 
+        }
+
+        .form-section {
+            background: rgba(255, 255, 255, 
+var(--form-section-transparency)); 
+            padding: 25px; 
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); 
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex; 
+            flex-direction: column; 
+            align-items: center;
+            width: 100%; 
+            max-width: 500px;
+            box-sizing: border-box;
+        }
+
+        .form-section.login {
+            margin: 0 auto;
+            width: auto;
+            max-width: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+
+        .form-section.login button {
+            margin: 0;
+        }
+
+        .form-section.login #qr-link {
+            text-align: center;
+            width: 100%;
+        }
+
+        .form-section:not(.login) {
+            width: 100%; 
+            max-width: 500px;
+            align-items: center;
+        }
+
+        .button-row {
+            display: flex; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            gap: 10px;
+            width: 100%; 
+            margin-top: 10px;
+        }
+
+        .button-row button {
+            flex: 1; 
+            min-width: 100px; 
+            max-width: 120px;
+            padding: 10px 10px; 
+            font-size: 0.85em;
+        }
+
+        .wallet-input {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 15px;
+            width: 100%;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .wallet-input input.wallet-address {
+            width: 100%;
+            max-width: 400px;
+            margin: 10px 0;
+            box-sizing: border-box;
+            padding: 12px 30px 12px 12px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-size: 1em;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .wallet-input .amount-remove-group {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .wallet-input input.wallet-amount {
+            width: 120px;
+            max-width: 120px;
+            margin: 0;
+        }
+
+        .wallet-input button {
+            padding: 8px 15px;
+            font-size: 0.9em;
+            margin: 0;
+        }
+
+        .wallet-input .trustline-status-box {
+            position: absolute;
+            right: 10px;
+            top: 22px;
+            width: 16px;
+            height: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: transparent;
+            border-radius: 3px;
+            display: none;
+        }
+
+        .wallet-input .trustline-status-box.valid {
+            background: #28a745;
+            display: block;
+        }
+
+        .wallet-input .trustline-status-box.invalid {
+            background: #dc3545;
+            display: block;
+        }
+
+        @media (max-width: 600px) {
+            .wallet-input .trustline-status-box {
+                right: 10px;
+                top: 22px;
+                width: 14px;
+                height: 14px;
+            }
+        }
+
+        #airdrop-form, #results { 
+            display: none; 
+            width: 100%; 
+        }
+
+        #results {
+            margin-top: 20px; 
+            text-align: left;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            background: rgba(255, 255, 255, var(--results-transparency)); 
+            padding: 25px; 
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); 
+            backdrop-filter: blur(10px); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #results p {
+            background: rgba(255, 255, 255, 0.1); 
+            color: #fff; 
+            padding: 10px; 
+            border-radius: 8px;
+            margin: 5px 0; 
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #results p .scanned-check {
+            color: #28a745;
+            font-size: 1.2em;
+            margin-left: 10px;
+        }
+
+        .notification-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            display: none;
+        }
+
+        .notification {
+            position: fixed; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%);
+            background: linear-gradient(90deg, #28a745, #00d4ff); 
+            color: #fff;
+            padding: 15px 30px; 
+            border-radius: 8px; 
+            display: none; 
+            z-index: 10001;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5); 
+            max-width: 80%; 
+            text-align: center;
+            animation: fadeInOut 5s;
+        }
+
+        .notification.error {
+            background: linear-gradient(90deg, #dc3545, #ff6f61);
+        }
+
+        .fee-confirmation {
+            position: fixed; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 
+var(--fee-confirmation-transparency)); 
+            padding: 25px; 
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); 
+            z-index: 10001;
+            backdrop-filter: blur(10px); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: none; 
+            flex-direction: column; 
+            align-items: center;
+            max-width: 80%; 
+            text-align: center; 
+            color: #fff;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .fee-confirmation p {
+            font-size: 1em; 
+            margin: 0 0 15px; 
+            color: #00d4ff;
+            text-shadow: 0 0 5px rgba(0, 212, 255, 0.5);
+        }
+
+        .fee-confirmation .disclaimer {
+            font-size: 0.8em; 
+            color: #aaa; 
+            margin: 10px 0;
+        }
+
+        .fee-confirmation .button-row {
+            display: flex; 
+            gap: 10px; 
+            justify-content: center;
+        }
+
+        .loader {
+            display: none; 
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top: 4px solid #00d4ff; 
+            border-radius: 50%; 
+            width: 20px; 
+            height: 20px;
+            animation: spin 1s linear infinite; 
+            margin: 0 10px;
+        }
+
+        #qr-code, .transaction-qr {
+            display: none; 
+            margin: 20px auto; 
+            max-width: 200px;
+            border: 5px solid #00d4ff; 
+            border-radius: 10px; 
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+        }
+
+        .qr-link {
+            color: #00d4ff; 
+            text-decoration: none; 
+            font-size: 0.9em; 
+            margin-top: 10px;
+            display: block; 
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .qr-link:hover { 
+            text-decoration: underline; 
+            color: #ff6f61; 
+        }
+
+        .transaction-qr-link {
+            text-align: center;
+            display: block;
+            width: 100%;
+        }
+
+        footer {
+            background: linear-gradient(90deg, #ff6f61, #ff00ff); 
+            padding: 15px 0; 
+            text-align: center;
+            font-size: 0.9em; 
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        footer a {
+            color: #fff; 
+            text-decoration: none; 
+            transition: all 0.3s ease;
+        }
+
+        footer a:hover { 
+            color: #00d4ff; 
+            text-decoration: underline; 
+        }
+
+        @media (max-width: 600px) {
+            .container { 
+                padding: 15px; 
+            }
+
+            .wallet-input { 
+                max-width: 100%; 
+            }
+
+            .wallet-input input.wallet-address {
+                max-width: 100%;
+                margin-bottom: 10px;
+            }
+
+            .wallet-input .amount-remove-group {
+                gap: 5px;
+            }
+
+            .wallet-input input.wallet-amount {
+                margin-left: 0; 
+                margin-bottom: 10px;
+                width: 100px; 
+                max-width: 100px;
+            }
+
+            .wallet-input button { 
+                margin-left: 0; 
+            }
+
+            .wallet-input .trustline-status {
+                right: 10px;
+                top: 22px;
+                font-size: 0.9em;
+            }
+
+            .notification, .fee-confirmation { 
+                padding: 10px 20px; 
+                font-size: 0.9em; 
+            }
+
+            .wallet-address-display { 
+                font-size: 0.8em; 
+            }
+
+            .wallet-toggle { 
+                top: 19px; 
+                right: 10px; 
+                font-size: 1.2em; 
+            }
+
+            .disconnect-button { 
+                top: 10px; 
+                right: 40px; 
+                font-size: 0.7em; 
+                padding: 5px 10px; 
+            }
+
+            .form-section { 
+                max-width: 100%; 
+            }
+
+            .button-row button { 
+                min-width: 80px; 
+                max-width: 100px; 
+                font-size: 0.75em; 
+                padding: 8px 8px; 
+            }
+
+            input, select {
+                max-width: 100%;
+            }
+        }
+
+        #results h2 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #results .refresh-icon {
+            color: #00d4ff;
+            font-size: 1em;
+            cursor: pointer;
+            transition: color 0.3s ease, transform 0.3s ease;
+        }
+
+        #results .refresh-icon:hover {
+    color: #ff6f61;
+    transform: rotate(360deg);
+        }
+
+        #results .refresh-icon.spinning {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translate(-50%, -60%); }
+            10% { opacity: 1; transform: translate(-50%, -50%); }
+            90% { opacity: 1; transform: translate(-50%, -50%); }
+            100% { opacity: 0; transform: translate(-50%, -60%); }
+        }
+
+        .icon { 
+            margin-right: 8px; 
+        }
+    </style>
+</head>
+<body>
+    <video id="background-video" autoplay loop muted playsinline>
+        <source 
+src="https://video.wixstatic.com/video/15ad31_025323c53b36493482895d70f5acbd45/720p/mp4/file.mp4" 
+type="video/mp4">
+    </video>
+    <div id="preloader">
+        <div class="preloader-logo">REMI</div>
+    </div>
+    <div class="main-content">
+        <button id="disconnect-button" class="disconnect-button" 
+style="display: none;">Disconnect</button>
+        <i id="wallet-toggle" class="fas fa-wallet wallet-toggle 
+disconnected"></i>
+        <header>
+            <h1><i class="fas fa-rocket icon"></i> REMI Airdrop Bot</h1>
+        </header>
+        <div class="container">
+            <div id="wallet-address-container" 
+class="wallet-address-container" style="display: none;">
+                <div id="wallet-address-display" 
+class="wallet-address-display"></div>
+            </div>
+            <div class="form-section login" style="display: none;">
+                <button id="login-btn"><i class="fas fa-sign-in-alt 
+icon"></i> Log in with Xaman <span class="loader" 
+id="login-loader"></span></button>
+                <img id="qr-code" src="" alt="QR Code for Login">
+                <a id="qr-link" class="qr-link" href="#" target="_blank" 
+style="display: none;">Open in Xaman</a>
+            </div>
+            <div id="airdrop-form" class="form-section">
+                <select id="token-type">
+                    <option value="XRP">XRP</option>
+                </select>
+                <input type="number" id="total-amount" placeholder="Total 
+Amount" step="0.000001" min="0" readonly>
+                <div id="wallet-list">
+                    <div class="wallet-input">
+                        <input type="text" class="wallet-address" 
+placeholder="Wallet Address">
+                        <div class="trustline-status-box"></div>
+                        <div class="amount-remove-group">
+                            <input type="number" class="wallet-amount" 
+placeholder="Amount" step="0.000001" min="0">
+                            <button 
+onclick="removeWallet(this)">Remove</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="button-row">
+                    <button onclick="addWallet()"><i class="fas fa-plus 
+icon"></i> Add Wallet</button>
+                    <button id="check-balance-btn"><i class="fas fa-wallet 
+icon"></i> Check Balance <span class="loader" 
+id="balance-loader"></span></button>
+                    <button id="validate-wallets-btn"><i class="fas 
+fa-check-circle icon"></i> Validate Wallets <span class="loader" 
+id="validate-loader"></span></button>
+                    <button id="check-trustlines-btn"><i class="fas 
+fa-link icon"></i> Check TrustLine <span class="loader" 
+id="trustlines-loader"></span></button>
+                    <button id="proceed-btn"><i class="fas fa-paper-plane 
+icon"></i> Proceed to Signing <span class="loader" 
+id="proceed-loader"></span></button>
+                </div>
+            </div>
+            <div id="transaction-signing" class="form-section" 
+style="display: none;">
+                <h2 id="transaction-title"></h2>
+                <img class="transaction-qr" src="" alt="Transaction QR 
+Code">
+                <a class="transaction-qr-link qr-link" href="#" 
+target="_blank">Open in Xaman</a>
+            </div>
+            <div id="results" class="form-section"></div>
+        </div>
+        <div id="notification-overlay" class="notification-overlay"></div>
+        <div id="notification" class="notification"></div>
+        <div id="fee-confirmation" class="fee-confirmation">
+            <p id="fee-message"></p>
+            <p class="disclaimer">Note: The fee is charged per wallet 
+attempted, even if the transaction fails, to cover REMI's operational 
+costs.</p>
+            <div class="button-row">
+                <button id="fee-agree-btn"><i class="fas fa-check 
+icon"></i> Agree</button>
+                <button id="fee-disagree-btn"><i class="fas fa-times 
+icon"></i> Disagree</button>
+            </div>
+        </div>
+        <footer>
+            <p>Powered by REMI | <a href="https://xrpl.org" 
+target="_blank">Learn More</a></p>
+        </footer>
+    </div>
+
+    <audio id="loader-audio" 
+src="https://static.wixstatic.com/mp3/15ad31_9eab52a3faee4738927cd3aed4e536d7.mp3" 
+preload="auto" crossorigin="anonymous"></audio>
+
+    <script 
+src="https://cdnjs.cloudflare.com/ajax/libs/decimal.js/10.3.1/decimal.min.js"></script>
+    <script>
+        const PRELOADER_TIMEOUT = 6000;
+        const BACKEND_URL = 'https://remi-airdrop-bot.onrender.com'; // 
+Updated to point to the live Render deployment
+
+        function loadResource(url, type) {
+            return new Promise((resolve) => {
+                const element = document.createElement(type === 'script' ? 
+'script' : 'link');
+                if (type === 'script') {
+                    element.src = url; element.async = true; element.defer 
+= true;
+                } else {
+                    element.rel = 'stylesheet'; element.href = url; 
+element.crossOrigin = 'anonymous';
+                }
+                element.onload = () => { console.log(`${url} loaded 
+successfully`); resolve(); };
+                element.onerror = (err) => { console.error(`Error loading 
+${url}:`, err); resolve(); };
+                document.head.appendChild(element);
+            });
+        }
+
+        function showMainContent() {
+            const preloader = document.getElementById('preloader');
+            const mainContent = document.querySelector('.main-content');
+            const audio = document.getElementById('loader-audio');
+            const fadeOut = setInterval(() => {
+                if (audio.volume > 0.1) {
+                    audio.volume -= 0.1;
+                } else {
+                    audio.pause();
+                    audio.currentTime = 0;
+                    clearInterval(fadeOut);
+                }
+            }, 100);
+            preloader.style.opacity = '0';
+            setTimeout(() => {
+                preloader.style.display = 'none';
+                mainContent.style.display = 'block';
+            }, 500);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded, attempting to play audio...');
+            const audio = document.getElementById('loader-audio');
+            audio.volume = 0.5;
+            const playAudio = () => {
+                audio.play().catch(err => {
+                    console.warn('Audio playback failed:', err);
+                    document.addEventListener('click', () => {
+                        audio.play().catch(e => console.warn('Audio 
+playback failed on click:', e));
+                    }, { once: true });
+                });
+            };
+            playAudio();
+        });
+
+        Promise.all([
+            
+loadResource('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap', 
+'link'),
+            
+loadResource('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css', 
+'link'),
+            new Promise(resolve => 
+document.addEventListener('DOMContentLoaded', resolve))
+        ]).then(() => {
+            console.log('Critical resources loaded, hiding preloader...');
+            setTimeout(() => {
+                showMainContent();
+            }, PRELOADER_TIMEOUT);
+        }).catch(err => {
+            console.error('Preloader error, showing main content:', err);
+            showMainContent();
+        });
+
+        setTimeout(() => {
+            if (document.getElementById('preloader').style.display !== 
+'none') {
+                console.warn('Preloader timeout, forcing main content 
+display');
+                showMainContent();
+            }
+        }, PRELOADER_TIMEOUT);
+
+        const loginBtn = document.getElementById('login-btn');
+        const loginLoader = document.getElementById('login-loader');
+        const qrCodeImg = document.getElementById('qr-code');
+        const qrLink = document.getElementById('qr-link');
+        const airdropForm = document.getElementById('airdrop-form');
+        const loginSection = 
+document.querySelector('.form-section.login');
+        const transactionSigning = 
+document.getElementById('transaction-signing');
+        const transactionTitle = 
+document.getElementById('transaction-title');
+        const transactionQr = document.querySelector('.transaction-qr');
+        const transactionQrLink = 
+document.querySelector('.transaction-qr-link');
+        const resultsDiv = document.getElementById('results');
+        const notification = document.getElementById('notification');
+        const notificationOverlay = 
+document.getElementById('notification-overlay');
+        const feeConfirmation = 
+document.getElementById('fee-confirmation');
+        const feeMessage = document.getElementById('fee-message');
+        const feeAgreeBtn = document.getElementById('fee-agree-btn');
+        const feeDisagreeBtn = 
+document.getElementById('fee-disagree-btn');
+        const tokenTypeSelect = document.getElementById('token-type');
+        const totalAmountInput = document.getElementById('total-amount');
+        const checkBalanceBtn = 
+document.getElementById('check-balance-btn');
+        const balanceLoader = document.getElementById('balance-loader');
+        const validateWalletsBtn = 
+document.getElementById('validate-wallets-btn');
+        const validateLoader = document.getElementById('validate-loader');
+        const checkTrustlinesBtn = 
+document.getElementById('check-trustlines-btn');
+        const trustlinesLoader = 
+document.getElementById('trustlines-loader');
+        const proceedBtn = document.getElementById('proceed-btn');
+        const proceedLoader = document.getElementById('proceed-loader');
+        const walletAddressDisplay = 
+document.getElementById('wallet-address-display');
+        const walletAddressContainer = 
+document.getElementById('wallet-address-container');
+        const walletToggle = document.getElementById('wallet-toggle');
+        const disconnectButton = 
+document.getElementById('disconnect-button');
+
+        let storage = {};
+        let tokenData = [];
+        let transactionResults = [];
+        let airdropData = { total_fee: null, service_fee: null };
+
+        function getStorageItem(key) {
+            try {
+                return localStorage.getItem(key);
+            } catch (e) {
+                console.warn('localStorage access failed, using in-memory 
+storage:', e);
+                return storage[key] || null;
+            }
+        }
+
+        function setStorageItem(key, value) {
+            try {
+                localStorage.setItem(key, value);
+            } catch (e) {
+                console.warn('localStorage set failed, using in-memory 
+storage:', e);
+                storage[key] = value;
+            }
+        }
+
+        function removeStorageItem(key) {
+            try {
+                localStorage.removeItem(key);
+            } catch (e) {
+                console.warn('localStorage remove failed, updating 
+in-memory storage:', e);
+                delete storage[key];
+            }
+        }
+
+        async function populateTokenDropdown() {
+            console.log('Fetching token holdings...');
+            try {
+                const response = await fetch(`${BACKEND_URL}/get-tokens`, 
+{
+                    headers: {
+                        'Authorization': `Bearer 
+${getStorageItem('access_token')}`,
+                        'account': getStorageItem('account')
+                    }
+                });
+                if (response.status === 401) {
+                    handleUnauthorized();
+                    return;
+                }
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => 
+({}));
+                    throw new Error(`HTTP error! status: 
+${response.status} - ${errorData.detail || 'Unknown error'}`);
+                }
+                const data = await response.json();
+                tokenData = data.tokens || [];
+                console.log('Token holdings:', tokenData);
+                tokenTypeSelect.innerHTML = '<option 
+value="XRP">XRP</option>';
+                tokenData.forEach(token => {
+                    const option = document.createElement('option');
+                    option.value = token.currency;
+                    option.textContent = `${token.name} 
+(${token.issuer})`;
+                    option.dataset.issuer = token.issuer;
+                    option.dataset.currency = token.currency;
+                    tokenTypeSelect.appendChild(option);
+                });
+                if (tokenData.length === 0) {
+                    showNotification('No tokens found in your wallet. 
+Airdrop XRP or add trustlines on Mainnet.', true);
+                }
+            } catch (error) {
+                console.error('Error fetching tokens:', error);
+                showNotification(
+                    `Error fetching token holdings: ${error.message}. 
+Ensure your account is funded on the XRP Ledger Mainnet. ` +
+                    `Acquire XRP from an exchange like Coinbase or 
+Bitstamp.`,
+                    true
+                );
+            }
+        }
+
+        function clearTrustlineStatus() {
+            const statusBoxes = 
+document.querySelectorAll('.trustline-status-box');
+            statusBoxes.forEach(box => {
+                box.classList.remove('valid', 'invalid');
+                box.style.display = 'none';
+            });
+        }
+
+        tokenTypeSelect.addEventListener('change', () => {
+            console.log('Token type changed, clearing trustline status and 
+amounts');
+            clearTrustlineStatus();
+            totalAmountInput.value = '';
+            const walletInputs = 
+document.getElementsByClassName('wallet-input');
+            for (const input of walletInputs) {
+                const amountInput = input.querySelector('.wallet-amount');
+                amountInput.value = '';
+            }
+            updateTotalAmount();
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded, attempting to play audio...');
+            const audio = document.getElementById('loader-audio');
+            audio.volume = 0.5;
+            audio.currentTime = 0;
+            audio.play().catch(err => {
+                console.warn('Audio playback failed:', err);
+            });
+        });
+
+        Promise.all([
+            
+loadResource('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap', 
+'link'),
+            
+loadResource('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css', 
+'link'),
+            new Promise(resolve => 
+document.addEventListener('DOMContentLoaded', resolve))
+        ]).then(() => {
+            console.log('Critical resources loaded, hiding preloader...');
+            setTimeout(() => {
+                showMainContent();
+            }, PRELOADER_TIMEOUT);
+        }).catch(err => {
+            console.error('Preloader error, showing main content:', err);
+            showMainContent();
+        });
+
+        setTimeout(() => {
+            if (document.getElementById('preloader').style.display !== 
+'none') {
+                console.warn('Preloader timeout, forcing main content 
+display');
+                showMainContent();
+            }
+        }, PRELOADER_TIMEOUT);
+
+        const accessToken = getStorageItem('access_token');
+        const storedAccount = getStorageItem('account');
+        if (accessToken && storedAccount) {
+            console.log('Validating existing access token...');
+            fetch(`${BACKEND_URL}/balance`, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'account': storedAccount
+                }
+            }).then(response => {
+                if (response.status === 401) {
+                    console.log('Access token invalid or expired');
+                    handleUnauthorized();
+                    return;
+                } else if (response.status === 404) {
+                    console.log('No XRPL account linked or not funded');
+                    handleUnauthorized();
+                    showNotification(
+                        'No funded XRPL account linked in Xaman. Please 
+create and fund an account on Mainnet at https://xrpl.org, ' +
+                        'import it into Xaman, and sign in with it. 
+Acquire XRP from an exchange like Coinbase or Bitstamp.',
+                        true
+                    );
+                    return;
+                } else if (!response.ok) {
+                    throw new Error(`HTTP error! status: 
+${response.status}`);
+                }
+                return response.json();
+            }).then(data => {
+                if (data) {
+                    console.log('Access token valid, showing airdrop 
+form');
+                    loginSection.style.display = 'none';
+                    loginBtn.style.display = 'none';
+                    qrCodeImg.style.display = 'none';
+                    qrLink.style.display = 'none';
+                    airdropForm.style.display = 'block';
+                    checkBalanceBtn.disabled = false;
+                    validateWalletsBtn.disabled = false;
+                    checkTrustlinesBtn.disabled = false;
+                    proceedBtn.disabled = false;
+                    walletAddressDisplay.textContent = `Signed in as: 
+${storedAccount}`;
+                    walletAddressContainer.style.display = 'block';
+                    walletAddressDisplay.style.display = 'block';
+                    walletToggle.classList.remove('disconnected');
+                    walletToggle.classList.add('connected');
+                    disconnectButton.style.display = 'inline-block';
+                    populateTokenDropdown();
+                }
+            }).catch(error => {
+                console.error('Error validating token:', error);
+                handleUnauthorized();
+                showNotification('Failed to validate session. Please log 
+in again.', true);
+            });
+        } else {
+            console.log('No access token or account found, showing login 
+form');
+            loginSection.style.display = 'block';
+            loginBtn.style.display = 'block';
+            airdropForm.style.display = 'none';
+            qrCodeImg.style.display = 'none';
+            qrLink.style.display = 'none';
+            walletAddressContainer.style.display = 'none';
+            walletAddressDisplay.style.display = 'none';
+            walletToggle.classList.add('disconnected');
+            walletToggle.classList.remove('connected');
+            disconnectButton.style.display = 'none';
+        }
+
+        walletToggle.addEventListener('click', () => {
+            if (walletToggle.classList.contains('connected')) {
+                handleSignOut();
+            } else {
+                loginBtn.click();
+            }
+        });
+
+        disconnectButton.addEventListener('click', () => {
+            console.log('Disconnect button clicked');
+            handleSignOut();
+        });
+
+        function handleSignOut() {
+            console.log('Signing out user...');
+            handleUnauthorized();
+            showNotification('Signed out successfully.');
+            setTimeout(() => {
+                console.log('Reloading page to restart bot...');
+                window.location.reload();
+            }, 500);
+        }
+
+        loginBtn.addEventListener('click', async () => {
+            console.log('Login button clicked, calling 
+/initiate-oauth...');
+            loginBtn.disabled = true;
+            loginLoader.style.display = 'inline-block';
+            try {
+                const response = await 
+fetch(`${BACKEND_URL}/initiate-oauth`, { method: 'POST' });
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => 
+({}));
+                    throw new Error(`HTTP error! status: 
+${response.status} - ${errorData.detail || 'Unknown error'}`);
+                }
+                const data = await response.json();
+                console.log('Initiate-oauth response:', data);
+                if (!data.payload_uuid || !data.qr_code_url || 
+!data.authorize_url) {
+                    throw new Error('Invalid OAuth initiation response');
+                }
+                setStorageItem('payload_uuid', data.payload_uuid);
+                qrCodeImg.src = data.qr_code_url;
+                qrCodeImg.style.display = 'block';
+                qrLink.href = data.authorize_url;
+                qrLink.style.display = 'block';
+                showNotification('Please scan the QR code or click the 
+link to log in with Xaman.');
+                const signInWindow = window.open(data.authorize_url, 
+'_blank');
+                if (!signInWindow || signInWindow.closed || typeof 
+signInWindow.closed === 'undefined') {
+                    console.log('Pop-up blocked, QR code and link 
+displayed.');
+                    showNotification('Pop-up blocked. Please click the 
+"Open in Xaman" link or scan the QR code.', true);
+                }
+                pollCallback(data.payload_uuid);
+            } catch (error) {
+                console.error('Error initiating login:', error);
+                showNotification(`Error initiating login: 
+${error.message}`, true);
+                loginBtn.disabled = false;
+                loginLoader.style.display = 'none';
+                qrCodeImg.style.display = 'none';
+                qrLink.style.display = 'none';
+            }
+        });
+
+        async function pollCallback(payloadUuid) {
+            let attempts = 0;
+            const maxAttempts = 48;
+            const interval = setInterval(async () => {
+                console.log(`Polling /callback (attempt ${attempts + 
+1}/${maxAttempts}) with payload_uuid:`, payloadUuid);
+                try {
+                    const response = await 
+fetch(`${BACKEND_URL}/callback?payload_uuid=${payloadUuid}`, {
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+                    const data = await response.json();
+                    console.log('Callback response:', { status: 
+response.status, data });
+
+                    if (response.status === 202 || data.status === 
+"pending") {
+                        attempts++;
+                        if (attempts >= maxAttempts) {
+                            clearInterval(interval);
+                            showNotification('Login timed out', true);
+                            loginBtn.disabled = false;
+                            loginLoader.style.display = 'none';
+                            qrCodeImg.style.display = 'none';
+                            qrLink.style.display = 'none';
+                        }
+                    } else if (response.status === 400 && data.detail === 
+"Payload was cancelled") {
+                        clearInterval(interval);
+                        showNotification('Login was cancelled', true);
+                        loginBtn.disabled = false;
+                        loginLoader.style.display = 'none';
+                        qrCodeImg.style.display = 'none';
+                        qrLink.style.display = 'none';
+                    } else if (response.status === 400 && data.detail === 
+"Payload has expired") {
+                        clearInterval(interval);
+                        showNotification('Login session expired', true);
+                        loginBtn.disabled = false;
+                        loginLoader.style.display = 'none';
+                        qrCodeImg.style.display = 'none';
+                        qrLink.style.display = 'none';
+                    } else if (
+                        response.status === 200 &&
+                        data.meta && data.meta.signed &&
+                        data.response && data.response.account &&
+                        data.application && 
+data.application.issued_user_token
+                    ) {
+                        clearInterval(interval);
+                        setStorageItem('access_token', 
+data.application.issued_user_token);
+                        setStorageItem('account', data.response.account);
+                        loginSection.style.display = 'none';
+                        loginBtn.style.display = 'none';
+                        qrCodeImg.style.display = 'none';
+                        qrLink.style.display = 'none';
+                        airdropForm.style.display = 'block';
+                        checkBalanceBtn.disabled = false;
+                        validateWalletsBtn.disabled = false;
+                        checkTrustlinesBtn.disabled = false;
+                        proceedBtn.disabled = false;
+                        walletAddressDisplay.textContent = `Signed in as: 
+${data.response.account}`;
+                        walletAddressContainer.style.display = 'block';
+                        walletAddressDisplay.style.display = 'block';
+                        walletToggle.classList.remove('disconnected');
+                        walletToggle.classList.add('connected');
+                        disconnectButton.style.display = 'inline-block';
+                        showNotification('Login successful!');
+                        populateTokenDropdown();
+                    } else {
+                        console.warn('Unexpected callback response:', 
+JSON.stringify(data));
+                        attempts++;
+                        if (attempts >= maxAttempts) {
+                            clearInterval(interval);
+                            showNotification('Unexpected response from 
+server. Please try again.', true);
+                            loginBtn.disabled = false;
+                            loginLoader.style.display = 'none';
+                            qrCodeImg.style.display = 'none';
+                            qrLink.style.display = 'none';
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error polling callback:', error);
+                    attempts++;
+                    if (attempts >= maxAttempts) {
+                        clearInterval(interval);
+                        showNotification(`Error polling login status: 
+${error.message}. Please try again.`, true);
+                        loginBtn.disabled = false;
+                        loginLoader.style.display = 'none';
+                        qrCodeImg.style.display = 'none';
+                        qrLink.style.display = 'none';
+                    }
+                }
+            }, 5000);
+        }
+
+        async function pollTransaction(payloadUuid, index, total, isFee = 
+false) {
+            return new Promise((resolve) => {
+                let attempts = 0;
+                const maxAttempts = 48;
+                const interval = setInterval(async () => {
+                    console.log(`Polling /callback for ${isFee ? 'fee 
+transaction' : `transaction ${index + 1}/${total}`} (attempt ${attempts + 
+1}/${maxAttempts}) with payload_uuid:`, payloadUuid);
+                    try {
+                        const response = await 
+fetch(`${BACKEND_URL}/callback?payload_uuid=${payloadUuid}`);
+                        const data = await response.json();
+                        console.log('Callback response data:', 
+JSON.stringify(data, null, 2)); // Debug log
+                        if (response.status === 202 || data.status === 
+"pending") {
+                            attempts++;
+                            if (attempts >= maxAttempts) {
+                                clearInterval(interval);
+                                showNotification(`${isFee ? 'Fee 
+transaction' : `Transaction ${index + 1}/${total}`} timed out`, true);
+                                resolve(false);
+                            }
+                        } else if (response.status === 400 && data.detail 
+=== "Payload was cancelled") {
+                            clearInterval(interval);
+                            showNotification(`${isFee ? 'Fee transaction' 
+: `Transaction ${index + 1}/${total}`} was cancelled`, true);
+                            resolve(false);
+                        } else if (response.status === 400 && data.detail 
+=== "Payload has expired") {
+                            clearInterval(interval);
+                            showNotification(`${isFee ? 'Fee transaction' 
+: `Transaction ${index + 1}/${total}`} session expired`, true);
+                            resolve(false);
+                        } else if (response.status === 200 && data.meta && 
+data.meta.signed) {
+                            clearInterval(interval);
+                            showNotification(`${isFee ? 'Fee transaction' 
+: `Transaction ${index + 1}/${total}`} signed successfully!`);
+                            console.log(`Signed txid for payload 
+${payloadUuid}:`, data.response?.txid || 'None'); // Debug log
+                            resolve(true);
+                        } else {
+                            throw new Error(`Unexpected callback response: 
+${JSON.stringify(data)}`);
+                        }
+                    } catch (error) {
+                        console.error(`Error polling ${isFee ? 'fee 
+transaction' : `transaction ${index + 1}/${total}`}:`, error);
+                        clearInterval(interval);
+                        showNotification(`Error polling ${isFee ? 'Fee 
+transaction' : `transaction ${index + 1}/${total}`}: ${error.message}`, 
+true);
+                        resolve(false);
+                    }
+                }, 5000);
+            });
+        }
+
+        window.addWallet = function() {
+            const walletList = document.getElementById('wallet-list');
+            const div = document.createElement('div');
+            div.className = 'wallet-input';
+            div.innerHTML = `
+                <input type="text" class="wallet-address" 
+placeholder="Wallet Address">
+                <div class="trustline-status-box"></div>
+                <div class="amount-remove-group">
+                    <input type="number" class="wallet-amount" 
+placeholder="Amount" step="0.000001" min="0">
+                    <button onclick="removeWallet(this)">Remove</button>
+                </div>
+            `;
+            walletList.appendChild(div);
+            updateTotalAmount();
+        };
+
+        window.removeWallet = function(button) {
+            button.parentElement.parentElement.remove();
+            updateTotalAmount();
+        };
+
+        function updateTotalAmount() {
+            const walletInputs = 
+document.getElementsByClassName('wallet-input');
+            let sum = new Decimal(0);
+            let hasInvalid = false;
+            for (const input of walletInputs) {
+                const amountInput = 
+input.querySelector('.wallet-amount').value.trim();
+                if (!amountInput) {
+                    input.querySelector('.wallet-amount').value = '';
+                    continue;
+                }
+                try {
+                    const amount = new Decimal(amountInput);
+                    if (amount.isNaN() || amount.lt(0)) {
+                        throw new Error(`Invalid amount: ${amountInput}`);
+                    }
+                    sum = sum.plus(amount);
+                } catch (e) {
+                    console.warn(`Invalid amount input: ${amountInput}, 
+error: ${e.message}`);
+                    input.querySelector('.wallet-amount').value = '';
+                    hasInvalid = true;
+                }
+            }
+            sum = sum.toDecimalPlaces(6);
+            totalAmountInput.value = sum.toDecimalPlaces(6).toNumber();
+            console.log(`Updated total amount: ${totalAmountInput.value}, 
+precise sum: ${sum.toString()}`);
+            if (hasInvalid) {
+                showNotification('Invalid amounts were reset. Please enter 
+valid numbers.', true);
+            }
+            return sum;
+        }
+
+        document.getElementById('wallet-list').addEventListener('input', 
+(event) => {
+            if (event.target.classList.contains('wallet-amount')) {
+                updateTotalAmount();
+            }
+        });
+
+        function handleUnauthorized() {
+            console.log('Clearing session data...');
+            removeStorageItem('access_token');
+            removeStorageItem('payload_uuid');
+            removeStorageItem('account');
+            loginSection.style.display = 'block';
+            loginBtn.style.display = 'block';
+            airdropForm.style.display = 'none';
+            transactionSigning.style.display = 'none';
+            feeConfirmation.style.display = 'none';
+            resultsDiv.style.display = 'none';
+            qrCodeImg.style.display = 'none';
+            qrLink.style.display = 'none';
+            walletAddressContainer.style.display = 'none';
+            walletAddressDisplay.style.display = 'none';
+            walletToggle.classList.remove('connected');
+            walletToggle.classList.add('disconnected');
+            disconnectButton.style.display = 'none';
+            tokenTypeSelect.innerHTML = '<option 
+value="XRP">XRP</option>';
+            tokenData = [];
+            showNotification('Session expired. Please log in again.', 
+true);
+        }
+
+        checkBalanceBtn.addEventListener('click', async () => {
+            console.log('Check Balance clicked, accessToken:', 
+getStorageItem('access_token'));
+            checkBalanceBtn.disabled = true;
+            balanceLoader.style.display = 'inline-block';
+            try {
+                const tokenType = tokenTypeSelect.value;
+                const selectedOption = tokenTypeSelect.selectedOptions[0];
+                const issuer = selectedOption.dataset.issuer || '';
+                const currency = selectedOption.dataset.currency || '';
+                
+                let query = '';
+                if (tokenType !== 'XRP') {
+                    if (!issuer || !currency) {
+                        throw new Error('Issuer or currency missing for 
+selected token');
+                    }
+                    if (!issuer.startsWith('r') || issuer.length < 25 || 
+issuer.length > 35) {
+                        throw new Error('Invalid issuer address for 
+selected token');
+                    }
+                    query = 
+`?issuer=${encodeURIComponent(issuer)}¤cy=${encodeURIComponent(currency)}`;
+                }
+                
+                console.log('Fetching balance with query:', query);
+                const response = await 
+fetch(`${BACKEND_URL}/balance${query}`, {
+                    headers: {
+                        'Authorization': `Bearer 
+${getStorageItem('access_token')}`,
+                        'account': getStorageItem('account')
+                    }
+                });
+                if (response.status === 401) {
+                    handleUnauthorized();
+                    return;
+                }
+                if (response.status === 404) {
+                    showNotification(
+                        'No funded XRPL account linked in Xaman. Please 
+create and fund an account on Mainnet at https://xrpl.org. ' +
+                        'Acquire XRP from an exchange like Coinbase or 
+Bitstamp.',
+                        true
+                    );
+                    return;
+                }
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => 
+({}));
+                    throw new Error(`HTTP error! status: 
+${response.status} - ${errorData.detail || 'Unknown error'}`);
+                }
+                const data = await response.json();
+                if (tokenType !== 'XRP') {
+                    if (data.balance_token === undefined || !data.currency 
+|| !data.account) {
+                        throw new Error('Invalid token balance response 
+from server');
+                    }
+                    showNotification(`Balance: ${data.balance_token} 
+${data.currency} (Account: ${data.account})`);
+                } else {
+                    if (!data.balance_xrp || !data.account) {
+                        throw new Error('Invalid XRP balance response from 
+server');
+                    }
+                    showNotification(`Balance: ${data.balance_xrp} XRP 
+(Account: ${data.account})`);
+                }
+            } catch (error) {
+                console.error('Error checking balance:', error);
+                showNotification(
+                    `Error checking balance: ${error.message}. Ensure your 
+account is funded and has a trustline for the token (if applicable) on 
+Mainnet at https://xrpl.org. ` +
+                    `Acquire XRP from an exchange like Coinbase or 
+Bitstamp.`,
+                    true
+                );
+            } finally {
+                checkBalanceBtn.disabled = false;
+                balanceLoader.style.display = 'none';
+            }
+        });
+
+        validateWalletsBtn.addEventListener('click', async () => {
+            console.log('Validate Wallets clicked, accessToken:', 
+getStorageItem('access_token'));
+            validateWalletsBtn.disabled = true;
+            validateLoader.style.display = 'inline-block';
+            try {
+                const wallets = 
+Array.from(document.getElementsByClassName('wallet-input')).map(div => {
+                    const address = 
+div.querySelector('.wallet-address').value.trim();
+                    const amountInput = 
+div.querySelector('.wallet-amount').value.trim();
+                    if (!address) {
+                        throw new Error('Wallet address cannot be empty');
+                    }
+                    const amount = amountInput ? parseFloat(amountInput) : 
+0;
+                    if (isNaN(amount) || amount < 0) {
+                        throw new Error(`Invalid amount for address 
+${address}: ${amountInput}`);
+                    }
+                    return { address, amount };
+                });
+                if (wallets.length === 0) {
+                    throw new Error('At least one wallet is required');
+                }
+                const tokenType = tokenTypeSelect.value;
+                const selectedOption = tokenTypeSelect.selectedOptions[0];
+                const issuer = selectedOption.dataset.issuer || '';
+                const currency = selectedOption.dataset.currency || '';
+                
+                let query = 
+`?token_type=${encodeURIComponent(tokenType)}`;
+                if (tokenType !== 'XRP') {
+                    if (!issuer || !currency) {
+                        throw new Error('Issuer or currency missing for 
+selected token');
+                    }
+                    query += 
+`&issuer=${encodeURIComponent(issuer)}¤cy=${encodeURIComponent(currency)}`;
+                }
+                
+                console.log('Validating wallets:', wallets, 'Query:', 
+query);
+                const response = await 
+fetch(`${BACKEND_URL}/validate-wallets${query}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer 
+${getStorageItem('access_token')}`,
+                        'account': getStorageItem('account')
+                    },
+                    body: JSON.stringify(wallets)
+                });
+                if (response.status === 401) {
+                    handleUnauthorized();
+                    return;
+                }
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => 
+({}));
+                    throw new Error(`HTTP error! status: 
+${response.status} - ${errorData.detail || 'Unknown error'}`);
+                }
+                const data = await response.json();
+                if (!Array.isArray(data)) {
+                    throw new Error('Invalid validation response from 
+server');
+                }
+                resultsDiv.innerHTML = '<h2>Wallet Validation 
+Results</h2>' + data.map(wallet => `
+                    <p>${wallet.address}: ${wallet.status}${wallet.error ? 
+` (${wallet.error})` : ''}</p>
+                `).join('');
+                resultsDiv.style.display = 'block';
+                showNotification('Wallet validation completed!');
+            } catch (error) {
+                console.error('Error validating wallets:', error);
+                showNotification(
+                    `Error validating wallets: ${error.message}. Ensure 
+addresses are valid on the XRP Ledger Mainnet. ` +
+                    `Acquire XRP from an exchange like Coinbase or 
+Bitstamp.`,
+                    true
+                );
+            } finally {
+                validateWalletsBtn.disabled = false;
+                validateLoader.style.display = 'none';
+            }
+        });
+
+        checkTrustlinesBtn.addEventListener('click', async () => {
+            console.log('Check Trustlines clicked, accessToken:', 
+getStorageItem('access_token'));
+            checkTrustlinesBtn.disabled = true;
+            trustlinesLoader.style.display = 'inline-block';
+            try {
+                const wallets = 
+Array.from(document.getElementsByClassName('wallet-input')).map(div => {
+                    const address = 
+div.querySelector('.wallet-address').value.trim();
+                    const amountInput = 
+div.querySelector('.wallet-amount').value.trim();
+                    if (!address) {
+                        throw new Error('Wallet address cannot be empty');
+                    }
+                    const amount = amountInput ? parseFloat(amountInput) : 
+0;
+                    if (isNaN(amount) || amount < 0) {
+                        throw new Error(`Invalid amount for address 
+${address}: ${amountInput}`);
+                    }
+                    return { address, amount };
+                });
+                if (wallets.length === 0) {
+                    throw new Error('At least one wallet is required');
+                }
+                const tokenType = tokenTypeSelect.value;
+                const selectedOption = tokenTypeSelect.selectedOptions[0];
+                const issuer = selectedOption.dataset.issuer || '';
+                const currency = selectedOption.dataset.currency || '';
+                
+                let query = 
+`?token_type=${encodeURIComponent(tokenType)}`;
+                if (tokenType !== 'XRP') {
+                    if (!issuer || !currency) {
+                        throw new Error('Issuer or currency missing for 
+selected token');
+                    }
+                    query += 
+`&issuer=${encodeURIComponent(issuer)}¤cy=${encodeURIComponent(currency)}`;
+                }
+                
+                console.log('Checking trustlines for wallets:', wallets, 
+'Query:', query);
+                const response = await 
+fetch(`${BACKEND_URL}/check-trustlines${query}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer 
+${getStorageItem('access_token')}`,
+                        'account': getStorageItem('account')
+                    },
+                    body: JSON.stringify(wallets)
+                });
+                if (response.status === 401) {
+                    handleUnauthorized();
+                    return;
+                }
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => 
+({}));
+                    throw new Error(`HTTP error! status: 
+${response.status} - ${errorData.detail || 'Unknown error'}`);
+                }
+                const data = await response.json();
+                if (!Array.isArray(data)) {
+                    throw new Error('Invalid trustline check response from 
+server');
+                }
+                
+                const walletInputs = 
+document.getElementsByClassName('wallet-input');
+                for (const input of walletInputs) {
+                    const address = 
+input.querySelector('.wallet-address').value.trim();
+                    const result = data.find(w => w.address === address);
+                    const statusBox = 
+input.querySelector('.trustline-status-box');
+                    if (result) {
+                        statusBox.classList.remove('valid', 'invalid');
+                        statusBox.style.display = 'block';
+                        statusBox.classList.add(result.has_trustline ? 
+'valid' : 'invalid');
+                    } else {
+                        statusBox.classList.remove('valid', 'invalid');
+                        statusBox.style.display = 'none';
+                    }
+                }
+                
+                const allHaveTrustlines = data.every(w => 
+w.has_trustline);
+                if (allHaveTrustlines) {
+                    showNotification('All wallets have trustlines for the 
+selected token.');
+                } else {
+                    showNotification('Some wallets lack trustlines. Check 
+the red markers.', true);
+                }
+            } catch (error) {
+                console.error('Error checking trustlines:', error);
+                showNotification(
+                    `Error checking trustlines: ${error.message}. Ensure 
+addresses are valid and have trustlines set up on the XRP Ledger Mainnet. 
+` +
+                    `Acquire XRP from an exchange like Coinbase or 
+Bitstamp.`,
+                    true
+                );
+            } finally {
+                checkTrustlinesBtn.disabled = false;
+                trustlinesLoader.style.display = 'none';
+            }
+        });
+
+        function calculateServiceFee(walletCount) {
+            const feePerWallet = 0.05;
+            const maxFee = 5.0;
+            return Math.min(walletCount * feePerWallet, 
+maxFee).toFixed(2);
+        }
+
+        proceedBtn.addEventListener('click', async () => {
+            console.log('Proceed to Signing clicked, accessToken:', 
+getStorageItem('access_token'));
+            const wallets = 
+Array.from(document.getElementsByClassName('wallet-input')).map(div => ({
+                address: 
+div.querySelector('.wallet-address').value.trim(),
+                amount: 
+parseFloat(div.querySelector('.wallet-amount').value.trim()) || 0
+            }));
+            if (wallets.length === 0) {
+                showNotification('At least one wallet is required.', 
+true);
+                return;
+            }
+            const serviceFee = calculateServiceFee(wallets.length);
+            feeMessage.textContent = `You will be charged a REMI service 
+fee of ${serviceFee} XRP to proceed with the airdrop. MAX 5 XRP`;
+            feeConfirmation.style.display = 'flex';
+            notificationOverlay.style.display = 'block';
+
+            feeAgreeBtn.onclick = async () => {
+    feeConfirmation.style.display = 'none';
+    notificationOverlay.style.display = 'none';
+    proceedBtn.disabled = true;
+    proceedLoader.style.display = 'inline-block';
+    airdropForm.style.display = 'none';
+    resultsDiv.innerHTML = '';
+    resultsDiv.style.display = 'none';
+    transactionSigning.style.display = 'block';
+    try {
+        const tokenType = tokenTypeSelect.value;
+        const selectedOption = tokenTypeSelect.selectedOptions[0];
+        const issuer = selectedOption.dataset.issuer || null;
+        const currency = selectedOption.dataset.currency || null;
+        const totalAmount = updateTotalAmount();
+        if (totalAmount.isNaN() || totalAmount.lt(0)) {
+            throw new Error('Total amount must be a non-negative number');
+        }
+        if (tokenType !== 'XRP' && (!issuer || !currency)) {
+            throw new Error('Invalid token selection: Issuer or currency 
+missing');
+        }
+        const wallets = 
+Array.from(document.getElementsByClassName('wallet-input')).map(div => {
+            const address = 
+div.querySelector('.wallet-address').value.trim();
+            const amountInput = 
+div.querySelector('.wallet-amount').value.trim();
+            if (!address) {
+                throw new Error('Wallet address cannot be empty');
+            }
+            const amount = amountInput ? parseFloat(amountInput) : 0;
+            if (isNaN(amount) || amount < 0) {
+                throw new Error(`Invalid amount for address ${address}: 
+${amountInput}`);
+            }
+            return { address, amount };
+        });
+        if (wallets.length === 0) {
+            throw new Error('At least one wallet is required');
+        }
+        if (totalAmount.gt(0) && !wallets.some(wallet => wallet.amount > 
+0)) {
+            throw new Error('At least one wallet must have a non-zero 
+amount if total amount is greater than 0');
+        }
+        const payload = {
+            token_type: tokenType,
+            total_amount: totalAmount.toDecimalPlaces(6).toNumber(),
+            wallets,
+            account: getStorageItem('account')
+        };
+        if (tokenType !== 'XRP') {
+            payload.issuer = issuer;
+            payload.currency = currency;
+        }
+        console.log('Airdrop request payload:', JSON.stringify(payload, 
+null, 2));
+        const response = await fetch(`${BACKEND_URL}/airdrop`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer 
+${getStorageItem('access_token')}`,
+                'account': getStorageItem('account')
+            },
+            body: JSON.stringify(payload)
+        });
+        if (response.status === 401) {
+            handleUnauthorized();
+            return;
+        }
+        if (response.status === 404) {
+            showNotification(
+                'No funded XRPL account linked in Xaman. Please create and 
+fund an account on Mainnet at https://xrpl.org. ' +
+                'Acquire XRP from an exchange like Coinbase or Bitstamp.',
+                true
+            );
+            return;
+        }
+        if (response.status === 422) {
+            const errorData = await response.json().catch(() => ({}));
+            const detail = errorData.detail || {};
+            throw new Error(`Airdrop payload validation failed: 
+${detail.error || 'Invalid payload'}. Details: 
+${JSON.stringify(detail)}`);
+        }
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`HTTP error! status: ${response.status} - 
+${errorData.detail || 'Unknown error'}`);
+        }
+        const data = await response.json();
+        console.log('Airdrop response:', data);
+        if (!data.transactions || !Array.isArray(data.transactions)) {
+            throw new Error('Invalid airdrop response from server');
+        }
+        airdropData = { total_fee: data.total_fee, service_fee: 
+data.service_fee }; // Store fee data
+        let allSigned = true;
+        if (data.fee_transaction) {
+            transactionTitle.textContent = `Sign REMI Service Fee Payment 
+(${serviceFee} XRP)`;
+            transactionQr.src = 
+`https://xumm.app/sign/${data.fee_transaction.payload_uuid}_q.png`;
+            transactionQr.style.display = 'block';
+            transactionQrLink.href = data.fee_transaction.sign_url;
+            transactionQrLink.style.display = 'block';
+            showNotification(`Please authorize the REMI service fee 
+payment of ${serviceFee} XRP in Xaman.`);
+            const feeSigned = await 
+pollTransaction(data.fee_transaction.payload_uuid, 0, 0, true);
+            if (!feeSigned) {
+                allSigned = false;
+                showNotification('Fee payment not authorized. Airdrop 
+cancelled.', true);
+                transactionSigning.style.display = 'none';
+                airdropForm.style.display = 'block';
+                return;
+            }
+        }
+        const total = data.transactions.length;
+        transactionResults = data.transactions.map(tx => ({ ...tx, txid: 
+null }));
+        for (const [index, tx] of data.transactions.entries()) {
+            if (!tx.payload_uuid || !tx.sign_url || !tx.status) {
+                showNotification(`Invalid transaction data for transaction 
+${index + 1}`, true);
+                allSigned = false;
+                break;
+            }
+            transactionTitle.textContent = `Sign Transaction ${index + 1} 
+of ${total} (${tx.status.address})`;
+            transactionTitle.setAttribute('title', tx.status.address);
+            transactionQr.src = 
+`https://xumm.app/sign/${tx.payload_uuid}_q.png`;
+            transactionQr.style.display = 'block';
+            transactionQrLink.href = tx.sign_url;
+            transactionQrLink.style.display = 'block';
+            showNotification(`Airdrop initiated. Please authorize 
+transaction ${index + 1}/${total} in Xaman.`);
+            const signed = await pollTransaction(tx.payload_uuid, index, 
+total);
+            if (!signed) {
+                allSigned = false;
+                break;
+            }
+        }
+        transactionSigning.style.display = 'none';
+        airdropForm.style.display = 'block';
+        resultsDiv.innerHTML = `
+            <h2>Airdrop Report <i class="fas fa-sync-alt refresh-icon" 
+onclick="refreshAirdropReport()"></i></h2>
+            ${transactionResults.map(tx => `
+                <p>
+                    <span>${tx.status.address}: ${tx.txid || 
+tx.status.status}</span>
+                    <span>
+                        ${tx.txid ? `<i class="fas fa-copy copy-icon" 
+onclick="copyTransactionId('${tx.txid}')"></i>` : ''}
+                        ${tx.txid ? '<i class="fas fa-check-circle 
+scanned-check"></i>' : ''}
+                    </span>
+                </p>
+            `).join('')}
+            <p>Total Network Fee: ${airdropData.total_fee || 'N/A'} 
+XRP</p>
+            <p>Total REMI Service Fee: ${airdropData.service_fee || 'N/A'} 
+XRP</p>
+        `;
+        resultsDiv.style.display = 'block';
+        if (allSigned) {
+            showNotification('Airdrop transactions authorized 
+successfully!');
+        } else {
+            showNotification('Some airdrop transactions failed or were not 
+authorized.', true);
+        }
+    } catch (error) {
+        console.error('Error initiating airdrop:', error);
+        showNotification(
+            `Error initiating airdrop: ${error.message}. Ensure your 
+account is funded and wallets are valid on the XRP Ledger Mainnet. ` +
+            `Acquire XRP from an exchange like Coinbase or Bitstamp.`,
+            true
+        );
+        transactionSigning.style.display = 'none';
+        airdropForm.style.display = 'block';
+    } finally {
+        proceedBtn.disabled = false;
+        proceedLoader.style.display = 'none';
+    }
+};
+
+            feeDisagreeBtn.onclick = () => {
+                feeConfirmation.style.display = 'none';
+                notificationOverlay.style.display = 'none';
+                showNotification('Airdrop cancelled. You must agree to the 
+service fee to proceed.', true);
+            };
+        });
+
+        async function refreshAirdropReport() {
+            const refreshIcon = document.querySelector('.refresh-icon');
+            refreshIcon.classList.add('spinning');
+            try {
+                for (const [index, tx] of transactionResults.entries()) {
+                    if (!tx.payload_uuid || tx.txid) continue; // Skip if 
+no payload_uuid or txid already set
+                    console.log(`Fetching txid for payload 
+${tx.payload_uuid}`);
+                    const response = await 
+fetch(`${BACKEND_URL}/callback?payload_uuid=${tx.payload_uuid}`);
+                    const data = await response.json();
+                    console.log(`Refresh response for payload 
+${tx.payload_uuid}:`, JSON.stringify(data, null, 2));
+                    if (response.status === 200 && data.meta && 
+data.meta.signed && data.response?.txid) {
+                        transactionResults[index].txid = 
+data.response.txid;
+                        console.log(`Updated txid for 
+${tx.status.address}: ${data.response.txid}`);
+                    }
+                }
+                resultsDiv.innerHTML = `
+                    <h2>Airdrop Report <i class="fas fa-sync-alt 
+refresh-icon" onclick="refreshAirdropReport()"></i></h2>
+                    ${transactionResults.map(tx => `
+                        <p>
+                            <span>${tx.status.address}: ${tx.txid || 
+tx.status.status}</span>
+                            <span>
+                                ${tx.txid ? `<i class="fas fa-copy 
+copy-icon" onclick="copyTransactionId('${tx.txid}')"></i>` : ''}
+                                ${tx.txid ? '<i class="fas fa-check-circle 
+scanned-check"></i>' : ''}
+                            </span>
+                        </p>
+                    `).join('')}
+                    <p>Total Network Fee: ${airdropData.total_fee || 
+'N/A'} XRP</p>
+                    <p>Total REMI Service Fee: ${airdropData.service_fee 
+|| 'N/A'} XRP</p>
+                `;
+                showNotification('Airdrop report refreshed!');
+            } catch (error) {
+                console.error('Error refreshing airdrop report:', error);
+                showNotification('Failed to refresh airdrop report.', 
+true);
+            } finally {
+                refreshIcon.classList.remove('spinning');
+            }
+        }
+
+        function copyTransactionId(txId) {
+            navigator.clipboard.writeText(txId).then(() => {
+                showNotification('Transaction ID copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy transaction ID:', err);
+                showNotification('Failed to copy transaction ID.', true);
+            });
+        }
+
+        function showNotification(message, isError = false) {
+            notificationOverlay.style.display = 'none';
+            notification.style.display = 'none';
+
+            notification.innerHTML = message;
+            notification.className = `notification ${isError ? 'error' : 
+''}`;
+
+            notification.style.display = 'block';
+            notificationOverlay.style.display = 'block';
+
+            setTimeout(() => {
+                notification.style.display = 'none';
+                notificationOverlay.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
